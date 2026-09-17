@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>WebGIS Thửa + Lô</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+html,body,#map{height:100%;margin:0}
+.leaflet-popup-content{
+ max-height:250px;
+ overflow-y:auto;
+ width:300px!important;
+}
+.popup-table{
+ width:100%;
+ border-collapse:collapse;
+ font-family:'Segoe UI', Arial, sans-serif;
+ font-size:13px;
+ line-height:1.4;
+}
+.popup-table td{
+ padding:4px;
+ border-bottom:1px solid #ddd;
+}
+.popup-table td:first-child{
+ font-weight:bold;
+}
+.lo-label{background:none;border:none}
+.lo-label span{
+display:flex;
+align-items:center;
+justify-content:center;
+width:22px;
+height:22px;
+background:white;
+border:1.5px solid #003b73;
+border-radius:50%;
+color:#003b73;
+font-size:11px;
+font-weight:bold;
+white-space:nowrap;
+}
+table{border-collapse:collapse;font-size:12px}
+td{border-bottom:1px solid #ddd;padding:3px}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+const map=L.map('map');
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+
+function popupHTML(p){
+ const labels = {
+ "Ten_Lo":"Tên lô / Plot name",
+ "Dien_Tich":"Diện tích / Area",
+ "DienTich":"Diện tích / Area",
+ "Loai_Cay":"Loại cây / Crop type",
+ "So_Cay":"Số cây / Number of trees",
+ "Thang_Trong":"Tháng trồng / Planting month",
+ "Nam_Trong":"Năm trồng / Planting year",
+ "Mat_Do":"Mật độ / Density",
+ "Loai_Giong":"Loại giống / Variety",
+
+ "Do_doc":"Độ dốc / Slope",
+ "Huong_doc":"Hướng dốc / Aspect",
+  "Huong doc":"Hướng dốc / Aspect",
+
+ "Kem_dt":"Zn dễ tiêu / Available Zn",
+ "Kẽm_dt":"Zn dễ tiêu / Available Zn",
+ "Kem_td":"Zn trao đổi / Exchangeable Zn",
+
+ "Canxi_td":"Ca trao đổi / Exchangeable Ca",
+ "Magie_td":"Mg trao đổi / Exchangeable Mg",
+ "Bo_dt":"B dễ tiêu / Available B",
+
+ "N_ts":"N tổng số / Total N",
+ "P2O5_ts":"P₂O₅ tổng số / Total P₂O₅",
+ "P2O5_dt":"P₂O₅ dễ tiêu / Available P₂O₅",
+ "K2Ots":"K₂O tổng số / Total K₂O",
+ "K2Odt":"K₂O dễ tiêu / Available K₂O",
+
+ "T_TB":"Nhiệt độ trung bình / Average temperature",
+ "T_toi_thap":"Nhiệt độ tối thấp / Minimum temperature",
+ "T_toi_da":"Nhiệt độ tối cao / Maximum temperature",
+
+ "Khu_Lien_Hop":"Khu liên hợp / Complex",
+ "Cong_Ty":"Công ty / Company",
+ "Xi_Nghiep":"Xí nghiệp / Enterprise",
+ "Nong_Truong":"Nông trường / Farm",
+ "Khu_Vuc":"Khu vực / Area",
+
+ "Loai_dat":"Loại đất / Soil type",
+ "Ghi_Chu":"Ghi chú / Note"
+};
+
+ let h='<table class="popup-table">';
+ for(let k in p){
+   let title = labels[k] || k.replaceAll('_',' ');
+   h += '<tr><td><b>'+title+'</b></td><td>'+p[k]+'</td></tr>';
+ }
+ return h+'</table>';
+}
+
+// Polygon thửa - giữ toàn bộ thông tin popup
+fetch('Thua.geojson')
+.then(r=>r.json())
+.then(data=>{
+ let layer=L.geoJSON(data,{
+   style:{
+    color:'#006400',
+    weight:1,
+    fillColor:'#8abf4f',
+    fillOpacity:0.35
+   },
+   onEachFeature:function(f,l){
+    l.bindPopup(popupHTML(f.properties || {}));
+   }
+ }).addTo(map);
+ map.fitBounds(layer.getBounds());
+});
+
+
+// Text lô - chỉ chỉnh riêng 51TL
+fetch('Text_lo.geojson')
+.then(r=>r.json())
+.then(data=>{
+ L.geoJSON(data,{
+  pointToLayer:function(f,ll){
+   let soLo=(f.properties && f.properties.Name) ? f.properties.Name : '';
+   let style='';
+   if(soLo==='51TL') style='transform:translateX(-10px);';
+
+   return L.marker(ll,{
+    interactive:false,
+    icon:L.divIcon({
+     className:'lo-label',
+     html:'<span style="'+style+'">'+soLo+'</span>',
+     iconSize:[22,22],
+     iconAnchor:[11,11]
+    })
+   });
+  }
+ }).addTo(map);
+});
+</script>
+</body>
+</html>
