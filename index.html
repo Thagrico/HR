@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebGIS Thửa + Lô</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+html,body,#map{height:100%;margin:0}
+#map{width:100%}
+
+.leaflet-popup-content{
+ width:280px!important;
+ max-height:300px;
+ overflow:auto;
+}
+
+.lo-label{
+ background:none!important;
+ border:none!important;
+}
+
+.lo-label span{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ width:22px;
+ height:22px;
+ background:white;
+ border:1.5px solid #003b73;
+ border-radius:50%;
+ color:#003b73;
+ font-size:11px;
+ font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+const map=L.map('map').setView([11,106],8);
+
+L.tileLayer(
+'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+{
+ attribution:'© OpenStreetMap',
+ maxZoom:19
+}
+).addTo(map);
+
+
+function popupHTML(p){
+ let h='<table>';
+ for(let k in p){
+  h+=`<tr><td><b>${k}</b></td><td>${p[k]}</td></tr>`;
+ }
+ return h+'</table>';
+}
+
+
+// THỬA POLYGON
+fetch('Thua.geojson')
+.then(r=>r.json())
+.then(data=>{
+
+let layer=L.geoJSON(data,{
+style:{
+ color:"#006400",
+ weight:1,
+ fillColor:"#8abf4f",
+ fillOpacity:0.35
+},
+onEachFeature:(f,l)=>{
+ if(f.properties)
+ l.bindPopup(popupHTML(f.properties));
+}
+}).addTo(map);
+
+map.fitBounds(layer.getBounds());
+
+});
+
+
+// TEXT LÔ
+fetch('Text_lo.geojson')
+.then(r=>r.json())
+.then(data=>{
+
+L.geoJSON(data,{
+
+pointToLayer:(feature,latlng)=>{
+
+let p=feature.properties||{};
+
+let soLo =
+p.Ten_Lo ||
+p.text_lo ||
+p.TEXT_LO ||
+p.LO ||
+p.SOLO ||
+p.So_Lo ||
+p.ID ||
+'';
+
+
+return L.marker(latlng,{
+ icon:L.divIcon({
+  className:'lo-label',
+  html:'<span>'+soLo+'</span>',
+  iconSize:[26,26]
+ })
+});
+
+}
+
+}).addTo(map);
+
+});
+
+</script>
+</body>
+</html>
